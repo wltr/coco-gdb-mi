@@ -1,0 +1,115 @@
+COMPILER GDBMI
+
+CHARACTERS
+  letter = 'A' .. 'Z' + 'a' .. 'z'.
+  digit = '0' .. '9'.
+  separator = '-' + '_'.
+  cr  = '\r'.
+  lf  = '\n'.
+  tab = '\t'.
+  back = '\\'.
+  chars = ANY.
+  noQuote = chars - '\"' - back.
+
+TOKENS
+  ident  = letter {letter | digit | separator}.
+  string = "\"" {noQuote | back chars} "\"".
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+  GDBMI =
+    Output {Output}.
+
+  Output =
+    {OutOfBandRecord} [ResultRecord] "(gdb)"
+    | "^exit".
+
+  OutOfBandRecord =
+    AsyncRecord
+    | StreamRecord.
+
+  AsyncRecord =
+    ExecAsyncOutput
+    | StatusAsyncOutput
+    | NotifyAsynchOutput.
+
+  StreamRecord =
+    ConsoleStreamOutput
+    | TargetStreamOutput
+    | LogStreamOutput.
+
+  ResultRecord =
+    "^" ResultClass {"," Result}.
+
+  ExecAsyncOutput =
+    "*" AsyncOutput.
+
+  StatusAsyncOutput =
+    "+" AsyncOutput.
+
+  NotifyAsynchOutput =
+    "=" AsyncOutput.
+
+  AsyncOutput =
+    AsyncClass {"," Result}.
+
+  ResultClass =
+    "done"
+    | "running"
+    | "connected"
+    | "error".
+
+  AsyncClass =
+    "stopped"
+    | "running"
+    | "thread-group-added"
+    | "thread-group-removed"
+    | "thread-group-started"
+    | "thread-group-exited"
+    | "thread-created"
+    | "thread-exited"
+    | "thread-selected"
+    | "library-loaded"
+    | "library-unloaded"
+    | "breakpoint-created"
+    | "breakpoint-modified"
+    | "breakpoint-deleted"
+    | "record-started"
+    | "record-stopped"
+    | "cmd-param-changed"
+    | "traceframe-changed"
+    | "tsv-created"
+    | "tsv-deleted".
+
+  Result =
+    Name "=" Value.
+
+  Name =
+    ident.
+
+  Value =
+    String
+    | Tuple
+    | List.
+
+  String =
+    string.
+
+  Tuple =
+    "{" [Result {"," Result}] "}".
+
+  List =
+    "[" [Value {"," Value} | Result {"," Result}] "]".
+
+  ConsoleStreamOutput =
+    "~" String.
+
+  TargetStreamOutput =
+    "@" String.
+
+  LogStreamOutput =
+    "&" String.
+
+END GDBMI.
